@@ -64,9 +64,9 @@ const addUser =  function(user) {
       `INSERT INTO users (name, email, password)
        VALUES ($1, $2, $3) 
        RETURNING *`, [user.name, user.email, 'password'])
-    .then((result) => {
-      return result.rows[0];
-    })
+    .then((result) => 
+      result.rows[0]
+    )
     .catch((err) => {
       console.log('Adding User Error', err.message);
     });
@@ -84,20 +84,20 @@ exports.addUser = addUser;
 const getAllReservations = function(guest_id, limit = 10) {
   return pool
     .query(
-      `SELECT * 
-       FROM reservations
-       JOIN properties ON properties.id = property_id
-       WHERE guest_id = $1 AND start_date <> Now()
+      `SELECT *, avg(rating) as average_rating
+       FROM property_reviews
+       JOIN reservations ON reservation_id = reservations.id
+       JOIN properties ON property_reviews.property_id = properties.id
+       WHERE reservations.guest_id = $1 AND start_date <> Now()
+       GROUP BY property_reviews.id, reservations.id, properties.id
        LIMIT $2`, [guest_id, limit])
-    .then((result) => {
-      console.log(result.rows);
-      return result.rows;
-    })
+    .then((result) => 
+      result.rows
+    )
     .catch((err) => {
       console.log('Retrieve Reservations Error', err.message);
     });
 }
-getAllReservations(50)
 exports.getAllReservations = getAllReservations;
 
 /// Properties
@@ -110,7 +110,12 @@ exports.getAllReservations = getAllReservations;
  */
 const getAllProperties = function(options, limit = 10) {
   return pool
-    .query(`SELECT * FROM properties LIMIT $1`, [limit])
+    .query(
+      `SELECT *, avg(rating) as average_rating
+       FROM properties 
+       JOIN property_reviews ON property_id = properties.id 
+       GROUP BY property_reviews.id, properties.id
+       LIMIT $1`, [limit])
     .then((result) => 
       result.rows)
     .catch((err) => {
