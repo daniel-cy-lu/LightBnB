@@ -47,7 +47,7 @@ const getUserWithId = function(id) {
        result.rows[0]
       )
     .catch((err) => {
-      console.log('User Null', err.message);
+      console.log('Id Null', err.message);
     });
 }
 exports.getUserWithId = getUserWithId;
@@ -68,7 +68,7 @@ const addUser =  function(user) {
       return result.rows[0];
     })
     .catch((err) => {
-      console.log('User Null', err.message);
+      console.log('Adding User Error', err.message);
     });
 }
 
@@ -82,8 +82,22 @@ exports.addUser = addUser;
  * @return {Promise<[{}]>} A promise to the reservations.
  */
 const getAllReservations = function(guest_id, limit = 10) {
-  return getAllProperties(null, 2);
+  return pool
+    .query(
+      `SELECT * 
+       FROM reservations
+       JOIN properties ON properties.id = property_id
+       WHERE guest_id = $1 AND start_date <> Now()
+       LIMIT $2`, [guest_id, limit])
+    .then((result) => {
+      console.log(result.rows);
+      return result.rows;
+    })
+    .catch((err) => {
+      console.log('Retrieve Reservations Error', err.message);
+    });
 }
+getAllReservations(50)
 exports.getAllReservations = getAllReservations;
 
 /// Properties
